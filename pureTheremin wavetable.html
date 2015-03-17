@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Leap Motion JavaScript Sample</title>
+<script src="lib/leapmin.js"></script>
+<script src="lib/midiutils.js"></script>
+<script src="theremin.js"></script>
+<script src="wavetables/wt.js"></script>
+
+
+<script>
+
+//values to smooth fade in when hand enters camera sight
+var fadeinfactor1=0;
+var fadeinfactor2=0;
+var fadeinSteps=0.05;
+
+// Setup Leap loop with frame callback function
+var controllerOptions = {enableGestures: true};
+var theremin1= new Theremin();
+theremin1.init(0);
+
+var theremin2= new Theremin();
+theremin2.init(0);
+
+// to use HMD mode:
+// controllerOptions.optimizeHMD = true;
+var lastframeHandsCount=0;
+
+Leap.loop(controllerOptions, function(frame) { 
+
+  if(frame.hands.length==0&&lastframeHandsCount==1&&theremin1.playing==true){
+	theremin1.fadeout();
+	console.log("theremin1 fadeout");
+	fadeinfactor1=0;
+  }  
+  if(frame.hands.length==1&&lastframeHandsCount==2&&theremin2.playing==true){
+	theremin2.fadeout();
+	console.log("theremin2 fadeout");
+	fadeinfactor2=0;
+  }
+  if(frame.hands.length==1&&lastframeHandsCount==0&&theremin1.playing==false){
+	theremin1.on();
+	console.log("theremin1 on");
+  }  
+  if(frame.hands.length==2&&lastframeHandsCount==1&&theremin2.playing==false){
+	theremin2.on();
+	console.log("theremin2 on");
+  }    
+  
+ // if (frame.hands.length > 0) {
+	for (var i = 0; i < frame.hands.length; i++) {
+      processHand(frame.hands[i],i);
+    } 
+ // }
+
+  if (frame.pointables.length > 0) {
+    var fingerTypeMap = ["Thumb", "Index finger", "Middle finger", "Ring finger", "Pinky finger"];
+    var boneTypeMap = ["Metacarpal", "Proximal phalanx", "Intermediate phalanx", "Distal phalanx"];
+	//
+  }
+  if (frame.gestures.length > 0) {
+  
+  }
+  
+  lastframeHandsCount=frame.hands.length;
+})
+
+
+function processHand(hand,id){
+
+    var x=    Math.max(0,Math.min(1,(Math.abs(hand.palmPosition[0]))/350));
+	var y=	 Math.max(0, Math.min(1,1-hand.palmPosition[1]/500));
+	var z=    Math.max(0,Math.min(1,(hand.palmPosition[2]+350)/700));
+	
+    if(id==0){
+		if(fadeinfactor1<1)fadeinfactor1+=fadeinSteps;
+		theremin1.setPitchBend(x);
+		theremin1.setVolume(y*fadeinfactor1);
+	}
+	if(id==1){
+		if(fadeinfactor2<1)fadeinfactor2+=fadeinSteps;
+		theremin2.setPitchBend(x);
+		theremin2.setVolume(y*fadeinfactor2);
+	}
+}
+
+
+</script>
+</head>
+<body>
+<h1>Leap Motion JavaScript Sample</h1>
+<div id="main">
+</div>
+</body>
+</html>
